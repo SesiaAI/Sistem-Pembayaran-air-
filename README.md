@@ -24,8 +24,8 @@ Semua akun default menggunakan password: `password`
 
 | Role | Nomor HP Login | Kata Sandi | Deskripsi |
 | :--- | :--- | :--- | :--- |
-| **Super Admin** | `081234567890` | `password` | Akses penuh & pengaturan tarif |
-| **Admin Lapangan** | `081234567891` | `password` | Pencatatan meter & kasir loket |
+| **Super Admin** | `081519941922` | `password` | Akses penuh & pengaturan tarif |
+| **Admin Lapangan** | `085710055616` | `password` | Pencatatan meter & kasir loket |
 | **Pelanggan** | `081234567892` | `password` | Budi Santoso (ada tagihan aktif & riwayat lunas) |
 | **Pelanggan 2** | `081234567893` | `password` | Siti Rahayu |
 

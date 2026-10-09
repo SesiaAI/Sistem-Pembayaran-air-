@@ -26,7 +26,7 @@ class DatabaseSeeder extends Seeder
         // 2. Super Admin
         $superAdmin = User::create([
             'name' => 'Super Admin',
-            'phone' => '081234567890',
+            'phone' => '081519941922',
             'email' => 'superadmin@air.test',
             'password' => Hash::make('password'),
             'role' => 'super_admin',
@@ -35,7 +35,7 @@ class DatabaseSeeder extends Seeder
         // 3. Admin Lapangan
         $admin = User::create([
             'name' => 'Admin Lapangan',
-            'phone' => '081234567891',
+            'phone' => '085710055616',
             'email' => 'admin@air.test',
             'password' => Hash::make('password'),
             'role' => 'admin',

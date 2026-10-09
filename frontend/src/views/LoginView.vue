@@ -83,14 +83,14 @@
             <div class="grid grid-cols-3 gap-2">
               <button 
                 type="button"
-                @click="fillCredentials('081234567890', 'password')"
+                @click="fillCredentials('081519941922', 'password')"
                 class="py-2 px-2 bg-slate-50 hover:bg-slate-100 border border-slate-200 rounded-xl text-[11px] font-bold text-slate-700 text-center transition"
               >
                 Super Admin
               </button>
               <button 
                 type="button"
-                @click="fillCredentials('081234567891', 'password')"
+                @click="fillCredentials('085710055616', 'password')"
                 class="py-2 px-2 bg-slate-50 hover:bg-slate-100 border border-slate-200 rounded-xl text-[11px] font-bold text-slate-700 text-center transition"
               >
                 Admin Lapangan
