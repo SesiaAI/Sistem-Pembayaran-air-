@@ -12,6 +12,7 @@ use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
 use Midtrans\Config;
 use Midtrans\Snap;
+use Midtrans\Transaction;
 
 class PaymentController extends Controller
 {
@@ -156,6 +157,83 @@ class PaymentController extends Controller
         return response()->json([
             'message' => 'Simulasi pembayaran berhasil! Status tagihan otomatis menjadi LUNAS.',
             'bill' => $bill->fresh()->load('latestPayment'),
+        ]);
+    }
+
+    /**
+     * Sinkronisasi status transaksi dari Midtrans (dipanggil setelah user selesai di Snap Popup).
+     * Berguna terutama saat pengujian di localhost tanpa public webhook (Ngrok).
+     */
+    public function syncPayment(Request $request, $billId)
+    {
+        $bill = Bill::findOrFail($billId);
+        $payment = Payment::where('bill_id', $bill->id)->latest()->first();
+
+        if (!$payment) {
+            return response()->json(['message' => 'Data pembayaran tidak ditemukan.'], 404);
+        }
+
+        if ($bill->status === 'paid') {
+            return response()->json([
+                'message' => 'Tagihan sudah berstatus lunas.',
+                'bill' => $bill->fresh()->load('latestPayment'),
+            ]);
+        }
+
+        try {
+            $statusObj = Transaction::status($payment->order_id);
+            $status = (array) $statusObj;
+            $transactionStatus = $status['transaction_status'] ?? '';
+            $fraudStatus = $status['fraud_status'] ?? '';
+
+            if ($transactionStatus === 'settlement' || ($transactionStatus === 'capture' && $fraudStatus === 'accept')) {
+                DB::transaction(function () use ($payment, $bill, $status) {
+                    $payment->update([
+                        'transaction_status' => 'settlement',
+                        'payment_type' => $status['payment_type'] ?? $payment->payment_type,
+                        'paid_at' => Carbon::now(),
+                        'midtrans_response' => $status,
+                    ]);
+                    $bill->update(['status' => 'paid']);
+                });
+
+                return response()->json([
+                    'message' => 'Pembayaran berhasil diverifikasi oleh Midtrans! Status tagihan LUNAS.',
+                    'bill' => $bill->fresh()->load('latestPayment'),
+                ]);
+            } elseif ($transactionStatus === 'pending') {
+                return response()->json([
+                    'message' => 'Menunggu penyelesaian pembayaran oleh pelanggan.',
+                    'bill' => $bill->load('latestPayment'),
+                ]);
+            }
+        } catch (Exception $e) {
+            Log::warning('Midtrans Transaction::status check: ' . $e->getMessage());
+
+            // Fallback: Jika frontend mengirim callback result dengan status settlement
+            $result = $request->input('result', []);
+            $cbStatus = $result['transaction_status'] ?? '';
+            if (in_array($cbStatus, ['settlement', 'capture'])) {
+                DB::transaction(function () use ($payment, $bill, $result) {
+                    $payment->update([
+                        'transaction_status' => 'settlement',
+                        'payment_type' => $result['payment_type'] ?? $payment->payment_type,
+                        'paid_at' => Carbon::now(),
+                        'midtrans_response' => $result,
+                    ]);
+                    $bill->update(['status' => 'paid']);
+                });
+
+                return response()->json([
+                    'message' => 'Pembayaran berhasil dikonfirmasi.',
+                    'bill' => $bill->fresh()->load('latestPayment'),
+                ]);
+            }
+        }
+
+        return response()->json([
+            'message' => 'Status pembayaran belum berubah.',
+            'bill' => $bill->load('latestPayment'),
         ]);
     }
 

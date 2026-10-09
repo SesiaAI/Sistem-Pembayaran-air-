@@ -126,19 +126,38 @@ const payWithMidtrans = async () => {
     // Jika window.snap tersedia dan bukan mock token
     if (window.snap && !isMock) {
       window.snap.pay(snapToken, {
-        onSuccess: function (result) {
+        onSuccess: async function (result) {
+          try {
+            await api.post(`/bills/${props.bill.id}/sync-payment`, { result });
+          } catch (e) {
+            console.error('Sync payment error', e);
+          }
+          alert('✅ Pembayaran Midtrans berhasil diproses!');
           emit('payment-success');
           closeModal();
         },
-        onPending: function (result) {
+        onPending: async function (result) {
+          try {
+            await api.post(`/bills/${props.bill.id}/sync-payment`, { result });
+          } catch (e) {
+            console.error('Sync payment pending', e);
+          }
+          alert('ℹ️ Pembayaran sedang diproses / menunggu transfer.');
           emit('payment-success');
           closeModal();
         },
         onError: function (result) {
           alert('Pembayaran gagal atau dibatalkan.');
         },
-        onClose: function () {
-          console.log('Customer closed popup without payment.');
+        onClose: async function () {
+          // Periksa apakah status sudah berubah menjadi lunas
+          try {
+            const syncRes = await api.post(`/bills/${props.bill.id}/sync-payment`);
+            if (syncRes.data?.status === 'paid') {
+              emit('payment-success');
+              closeModal();
+            }
+          } catch (e) {}
         }
       });
     } else {

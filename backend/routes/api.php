@@ -37,6 +37,7 @@ Route::middleware('auth:sanctum')->group(function () {
     // Tagihan & Pembayaran (Bisa diakses Pelanggan & Admin)
     Route::get('/bills/{id}', [BillController::class, 'show']);
     Route::post('/bills/{id}/snap-token', [PaymentController::class, 'createSnapToken']);
+    Route::post('/bills/{id}/sync-payment', [PaymentController::class, 'syncPayment']);
     Route::post('/bills/{id}/simulate-payment', [PaymentController::class, 'simulateSuccess']);
 
     // Area Pelanggan
